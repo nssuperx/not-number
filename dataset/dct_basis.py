@@ -2,50 +2,26 @@ import torch
 import matplotlib.pyplot as plt
 from torchvision.utils import make_grid
 import numpy as np
+from img_process import minmax_normalize, preprocess_imgs
 
 # github copilotに書かせた
 
 
-def dct_basis(N: int) -> torch.Tensor:
+def dct_basis(size: int) -> torch.Tensor:
     """N x NのDCT基底行列を返す
 
-    :param N: 基底画像の1辺のサイズ
-    :type N: int
+    :param size: 基底画像の1辺のサイズ
+    :type size: int
     :return: N x NのDCT基底行列
     :rtype: Tensor
     """
-    x = np.arange(N)
-    k = np.arange(N).reshape(-1, 1)
-    alpha = np.sqrt(2.0 / N) * np.ones((N, 1))
-    alpha[0, 0] = np.sqrt(1.0 / N)
-    basis_1d = alpha * np.cos(np.pi * (2 * x + 1) * k / (2 * N))
+    x = np.arange(size)
+    k = np.arange(size).reshape(-1, 1)
+    alpha = np.sqrt(2.0 / size) * np.ones((size, 1))
+    alpha[0, 0] = np.sqrt(1.0 / size)
+    basis_1d = alpha * np.cos(np.pi * (2 * x + 1) * k / (2 * size))
     basis_2d = np.einsum("ik,jl->ijkl", basis_1d, basis_1d)
     return torch.from_numpy(basis_2d).float()
-
-
-def minmax_normalize(imgs: torch.Tensor) -> torch.Tensor:
-    """各画像ごとにmin-max正規化"""
-    return (imgs - imgs.amin(dim=(-2, -1), keepdim=True)) / (
-        imgs.amax(dim=(-2, -1), keepdim=True) - imgs.amin(dim=(-2, -1), keepdim=True) + 1e-8
-    )
-
-
-def binarize_imgs(imgs: torch.Tensor, n: int) -> torch.Tensor:
-    """各画像ごとにn値化
-
-    :param imgs: 画像テンソル
-    :type imgs: Tensor
-    :param n: n値化のレベル
-    :type n: int
-    :return: n値化された画像テンソル
-    :rtype: Tensor
-    """
-    min_val = imgs.amin(dim=(-2, -1), keepdim=True)
-    max_val = imgs.amax(dim=(-2, -1), keepdim=True)
-    norm = (imgs - min_val) / (max_val - min_val + 1e-8)
-    quantized = torch.floor(norm * n)
-    quantized = quantized / (n - 1)
-    return quantized
 
 
 def visualize_dct_basis(imgs: torch.Tensor, grid_rows: int):
@@ -84,6 +60,25 @@ def random_weighted_sum_from_basis(basis: torch.Tensor, N: int, img_num: int) ->
     # [img_num, H, W] 合成
     imgs = (weights.unsqueeze(-1).unsqueeze(-1) * selected).sum(dim=1)
     return imgs  # [img_num, H, W]
+
+
+class DCTBasis(torch.utils.data.Dataset):
+    def __init__(self, data_num: int = 7000) -> None:
+        super().__init__()
+        base_size = 28  # mnistの画像サイズと同じ
+        basis = dct_basis(base_size)
+        basis = basis[:5, :5]  # いったん適当で。たぶん高周波成分は要らないと思う
+        use_base = 10  # 増やしてもあまり意味ない。変化の少ないノイズ画像みたいになる
+        data_imgs = random_weighted_sum_from_basis(basis, use_base, data_num)
+        data_imgs = minmax_normalize(data_imgs)
+        data_imgs = preprocess_imgs(data_imgs)
+        self.data = data_imgs.unsqueeze(1)  # [data_num, 1, H, W]にする(torchvisionのmnistと同じ形にするため)
+
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
+        return self.data[index], 10  # ラベルは適当で良い。0-9以外ならなんでもいい。数字ではないを表せたらいい。
+
+    def __len__(self) -> int:
+        return len(self.data)
 
 
 # デバッグ用
