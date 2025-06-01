@@ -1,7 +1,7 @@
 import torch
 from torchvision import datasets, transforms
 
-from dct_basis import DCTBasis
+from dataset.dct_basis import DCTBasis
 
 
 def generate_mnist_with_dctbasis() -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
