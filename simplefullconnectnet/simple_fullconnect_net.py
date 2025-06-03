@@ -8,11 +8,11 @@ import torch.optim as optim
 
 
 class SimpleFullConnectNet(nn.Module):
-    def __init__(self, in_features: int, out_features: int, classes: int):
+    def __init__(self, in_size: int, hidden_size: int, classes: int):
         super(SimpleFullConnectNet, self).__init__()
         self.flatten = nn.Flatten()
-        self.fc = nn.Linear(in_features, out_features)
-        self.out_layer = nn.Linear(out_features, classes)
+        self.fc = nn.Linear(in_size, hidden_size)
+        self.out_layer = nn.Linear(hidden_size, classes)
 
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
@@ -22,9 +22,16 @@ class SimpleFullConnectNet(nn.Module):
         return output
 
 
-def train(model: nn.Module, train_loader: torch.utils.data.DataLoader, optimizer: optim.Optimizer, epoch: int):
+def train(
+    model: nn.Module,
+    train_loader: torch.utils.data.DataLoader,
+    optimizer: optim.Optimizer,
+    epoch: int,
+    device: torch.device,
+):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
         loss = F.nll_loss(output, target)
@@ -42,12 +49,13 @@ def train(model: nn.Module, train_loader: torch.utils.data.DataLoader, optimizer
             )
 
 
-def test(model: nn.Module, test_loader: torch.utils.data.DataLoader):
+def test(model: nn.Module, test_loader: torch.utils.data.DataLoader, device: torch.device):
     model.eval()
     test_loss = 0
     correct = 0
     with torch.no_grad():
         for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
             output: torch.Tensor = model(data)
             test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability

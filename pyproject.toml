@@ -1,15 +1,12 @@
 [project]
-name = "context-challenge"
+name = "not-number"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "matplotlib>=3.10.3",
     "scipy>=1.15.3",
-    "torch>=2.7.0",
-    "torchaudio>=2.7.0",
-    "torchvision>=0.22.0",
 ]
 
 [dependency-groups]
@@ -19,3 +16,38 @@ dev = [
 
 [tool.ruff]
 line-length = 120
+
+[project.optional-dependencies]
+cpu = [
+    "torch>=2.7.0",
+    "torchaudio>=2.7.0",
+    "torchvision>=0.22.0",
+    "numpy>=2",
+]
+directml = [
+    "torch==2.4.1",
+    "torchaudio==2.4.1",
+    "torchvision==0.19.1",
+    "torch-directml==0.2.5.dev240914",
+    "numpy>=2",
+]
+win-rocm = [
+    "torch",
+    "torchaudio",
+    "torchvision",
+    "numpy<2"
+]
+
+[tool.uv]
+conflicts = [
+    [
+        { extra = "cpu" },
+        { extra = "directml" },
+        { extra = "win-rocm" },
+    ],
+]
+
+[tool.uv.sources]
+torch = { url = "https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torch-2.7.0a0+git3f903c3-cp312-cp312-win_amd64.whl", extra = "win-rocm" }
+torchaudio = { url = "https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torchaudio-2.6.0a0+1a8f621-cp312-cp312-win_amd64.whl", extra = "win-rocm" }
+torchvision = { url = "https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torchvision-0.22.0+9eb57cd-cp312-cp312-win_amd64.whl", extra = "win-rocm" }
