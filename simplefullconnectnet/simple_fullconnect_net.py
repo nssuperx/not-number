@@ -8,15 +8,18 @@ import torch.optim as optim
 
 
 class SimpleFullConnectNet(nn.Module):
-    def __init__(self, in_size: int, hidden_size: int, classes: int):
+    def __init__(self, in_size: int, hidden_sizes: list[int], classes: int):
         super(SimpleFullConnectNet, self).__init__()
         self.flatten = nn.Flatten()
-        self.fc = nn.Linear(in_size, hidden_size)
-        self.out_layer = nn.Linear(hidden_size, classes)
+        self.in_fc = nn.Linear(in_size, hidden_sizes[0])
+        self.fcs = nn.ModuleList([nn.Linear(hidden_sizes[i], hidden_sizes[i + 1]) for i in range(len(hidden_sizes[:-1]))])
+        self.out_layer = nn.Linear(hidden_sizes[-1], classes)
 
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
-        x = self.fc(x)
+        x = self.in_fc(x)
+        for fc in self.fcs:
+            x = fc(x)
         x = self.out_layer(x)
         output = F.softmax(x, dim=1)
         return output
@@ -42,7 +45,7 @@ def train(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
                     batch_idx * len(data),
-                    len(train_loader.dataset),
+                    len(train_loader.dataset),  # type: ignore
                     100.0 * batch_idx / len(train_loader),
                     loss.item(),
                 )
@@ -61,10 +64,13 @@ def test(model: nn.Module, test_loader: torch.utils.data.DataLoader, device: tor
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
 
-    test_loss /= len(test_loader.dataset)
+    test_loss /= len(test_loader.dataset)  # type: ignore
 
     print(
         "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
-            test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)
+            test_loss,
+            correct,
+            len(test_loader.dataset),  # type: ignore
+            100.0 * correct / len(test_loader.dataset),  # type: ignore
         )
     )
