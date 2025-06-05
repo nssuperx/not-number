@@ -20,6 +20,9 @@ if __name__ == "__main__":
     print(model)
     optimizer = optim.SGD(model.parameters(), lr=0.05)
 
-    for epoch in range(1, 10 + 1):
-        train(model, train_loader, optimizer, epoch, device)
-        test(model, test_loader, device)
+    for epoch in range(10):
+        train_loss = train(model, train_loader, optimizer, device)
+        loss, correct = test(model, test_loader, device)
+        print(
+            f"Epoch {epoch + 1}, Test Loss: {loss:.4f}, Correct: {correct}/{len(test_dataset)}, Accuracy: {correct / len(test_dataset) * 100:.2f}%"
+        )

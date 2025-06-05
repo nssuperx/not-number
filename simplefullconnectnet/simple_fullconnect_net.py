@@ -11,13 +11,13 @@ class SimpleFullConnectNet(nn.Module):
     def __init__(self, in_size: int, hidden_sizes: list[int], classes: int):
         super(SimpleFullConnectNet, self).__init__()
         self.flatten = nn.Flatten()
-        self.in_fc = nn.Linear(in_size, hidden_sizes[0])
+        self.in_layer = nn.Linear(in_size, hidden_sizes[0])
         self.fcs = nn.ModuleList([nn.Linear(hidden_sizes[i], hidden_sizes[i + 1]) for i in range(len(hidden_sizes[:-1]))])
         self.out_layer = nn.Linear(hidden_sizes[-1], classes)
 
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
-        x = self.in_fc(x)
+        x = self.in_layer(x)
         for fc in self.fcs:
             x = fc(x)
         x = self.out_layer(x)
@@ -29,30 +29,20 @@ def train(
     model: nn.Module,
     train_loader: torch.utils.data.DataLoader,
     optimizer: optim.Optimizer,
-    epoch: int,
     device: torch.device,
-):
+) -> float:
     model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for data, target in train_loader:
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.nll_loss(output, target)
+        loss = F.cross_entropy(output, target)
         loss.backward()
         optimizer.step()
-        if batch_idx % 100 == 0:
-            print(
-                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
-                    batch_idx * len(data),
-                    len(train_loader.dataset),  # type: ignore
-                    100.0 * batch_idx / len(train_loader),
-                    loss.item(),
-                )
-            )
+    return loss.item()
 
 
-def test(model: nn.Module, test_loader: torch.utils.data.DataLoader, device: torch.device):
+def test(model: nn.Module, test_loader: torch.utils.data.DataLoader, device: torch.device) -> tuple[float, int]:
     model.eval()
     test_loss = 0
     correct = 0
@@ -60,17 +50,9 @@ def test(model: nn.Module, test_loader: torch.utils.data.DataLoader, device: tor
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output: torch.Tensor = model(data)
-            test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
+            test_loss += F.cross_entropy(output, target, reduction="sum").item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
 
-    test_loss /= len(test_loader.dataset)  # type: ignore
-
-    print(
-        "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
-            test_loss,
-            correct,
-            len(test_loader.dataset),  # type: ignore
-            100.0 * correct / len(test_loader.dataset),  # type: ignore
-        )
-    )
+    test_loss /= len(test_loader.dataset)  # pyright: ignore[reportArgumentType]
+    return test_loss, int(correct)
