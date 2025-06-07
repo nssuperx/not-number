@@ -1,3 +1,4 @@
+from typing import Optional, Callable
 import torch
 import matplotlib.pyplot as plt
 from torchvision.utils import make_grid
@@ -64,7 +65,7 @@ def random_weighted_sum_from_basis(basis: torch.Tensor, N: int, img_num: int) ->
 
 
 class DCTBasis(torch.utils.data.Dataset):
-    def __init__(self, data_num: int = 7000) -> None:
+    def __init__(self, data_num: int = 6000, transform: Optional[Callable] = None) -> None:
         super().__init__()
         base_size = 28  # mnistの画像サイズと同じ
         basis = dct_basis(base_size)
@@ -72,11 +73,15 @@ class DCTBasis(torch.utils.data.Dataset):
         use_base = 10  # 増やしてもあまり意味ない。変化の少ないノイズ画像みたいになる
         data_imgs = random_weighted_sum_from_basis(basis, use_base, data_num)
         data_imgs = minmax_normalize(data_imgs)
-        data_imgs = preprocess_imgs(data_imgs)
+        data_imgs = preprocess_imgs(data_imgs)  # これが必要かは分からない
         self.data = data_imgs.unsqueeze(1)  # [data_num, 1, H, W]にする(torchvisionのmnistと同じ形にするため)
+        self.transform = transform
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
-        return self.data[index], 10  # ラベルは適当で良い。0-9以外ならなんでもいい。数字ではないを表せたらいい。
+        d = self.data[index]
+        if self.transform is not None:
+            d = self.transform(d)
+        return d, 10  # ラベルは適当で良い。0-9以外ならなんでもいい。数字ではないを表せたらいい。
 
     def __len__(self) -> int:
         return len(self.data)
