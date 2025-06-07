@@ -42,17 +42,18 @@ def train(
     return loss.item()
 
 
-def test(model: nn.Module, test_loader: torch.utils.data.DataLoader, device: torch.device) -> tuple[float, int]:
+def test(model: nn.Module, test_loader: torch.utils.data.DataLoader, num_classes: int, device: torch.device) -> tuple[float, list[int]]:
     model.eval()
     test_loss = 0
-    correct = 0
+    correct = [0 for _ in range(num_classes)]
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output: torch.Tensor = model(data)
             test_loss += F.cross_entropy(output, target, reduction="sum").item()  # sum up batch loss
-            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-            correct += pred.eq(target.view_as(pred)).sum().item()
-
+            pred = output.argmax(dim=1)  # shape: (batch_size,)
+            # クラスごとに正解数をカウント
+            for cls in range(num_classes):
+                correct[cls] += ((pred == cls) & (target == cls)).sum().item()
     test_loss /= len(test_loader.dataset)  # pyright: ignore[reportArgumentType]
-    return test_loss, int(correct)
+    return test_loss, correct
