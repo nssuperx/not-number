@@ -15,7 +15,7 @@ def get_device() -> torch.device:
     return device
 
 
-def show_accuracy_glaph(test_classes: dict[int, int], history: list[list[int]]) -> None:
+def show_accuracy_glaph(test_classes: dict[int, int], history: list[list[int]], path: str = "") -> None:
     epochs = range(1, len(history) + 1)
     test_size = sum(test_classes.values())
     plt.figure(figsize=(10, 4))
@@ -34,4 +34,7 @@ def show_accuracy_glaph(test_classes: dict[int, int], history: list[list[int]]) 
     plt.legend()
 
     plt.tight_layout()
-    plt.show()
+    if len(path) > 0:
+        plt.savefig(path)
+    else:
+        plt.show()
