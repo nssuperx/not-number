@@ -14,3 +14,7 @@ uv.lock
 
 # dataset
 data
+
+# misc
+.vscode
+playground
