@@ -13,7 +13,7 @@ from util import get_device, show_accuracy_glaph
 
 if __name__ == "__main__":
     device = get_device()
-    train_dataset, test_dataset = generate_mnist_with_variousimg(transform=transforms.Normalize((0.1307,), (0.3081,)))
+    train_dataset, test_dataset = generate_mnist_with_variousimg("../data", transform=transforms.Normalize((0.1307,), (0.3081,)))
     train_loader = torch.utils.data.DataLoader(train_dataset, shuffle=True, batch_size=100, pin_memory=True, num_workers=4)
     test_loader = torch.utils.data.DataLoader(test_dataset, shuffle=True, batch_size=100, pin_memory=True, num_workers=4)
 

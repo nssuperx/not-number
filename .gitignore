@@ -9,5 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
+# uv
+uv.lock
+
 # dataset
 data
