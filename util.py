@@ -38,3 +38,12 @@ def show_accuracy_glaph(test_classes: dict[int, int], history: list[list[int]], 
         plt.savefig(path)
     else:
         plt.show()
+
+
+def print_exp_param_mdtable(params: dict[str, str]) -> None:
+    headers = params.keys()
+    values = (str(params[k]) for k in params.keys())
+    header_row = "| " + " | ".join(headers) + " |"
+    separator_row = "| " + " | ".join(["---"] * len(headers)) + " |"
+    value_row = "| " + " | ".join(values) + " |"
+    print("\n".join([header_row, separator_row, value_row]))

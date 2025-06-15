@@ -1,6 +1,7 @@
 import os
 import sys
 from collections import Counter
+from typing import NamedTuple
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,7 +11,7 @@ from torchvision import datasets, transforms
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from dataset.concat_mnist import generate_mnist_with_variousimg
-from util import get_device, show_accuracy_glaph
+from util import get_device, show_accuracy_glaph, print_exp_param_mdtable
 
 # https://github.com/pytorch/examples/blob/main/mnist/main.py
 
@@ -39,6 +40,16 @@ class CNN(nn.Module):
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
         return output
+
+
+class ExpParams(NamedTuple):
+    not_number_train_size: int
+    not_number_test_size: int
+    train_size: int
+    test_size: int
+    batch_size: int
+    epochs: int
+    learning_rate: float
 
 
 def train(
@@ -75,20 +86,27 @@ def test(model: nn.Module, test_loader: torch.utils.data.DataLoader, num_classes
     return test_loss, correct
 
 
-def run(train_dataset: torch.utils.data.Dataset, test_dataset: torch.utils.data.Dataset, result_fig_path: str) -> None:
+def run(
+    train_dataset: torch.utils.data.Dataset,
+    test_dataset: torch.utils.data.Dataset,
+    batch_size: int,
+    epochs: int,
+    learning_rate: float,
+    result_fig_path: str,
+) -> None:
     device = get_device()
-    train_loader = torch.utils.data.DataLoader(train_dataset, shuffle=True, batch_size=100, pin_memory=True, num_workers=4)
-    test_loader = torch.utils.data.DataLoader(test_dataset, shuffle=True, batch_size=100, pin_memory=True, num_workers=4)
+    train_loader = torch.utils.data.DataLoader(train_dataset, shuffle=True, batch_size=batch_size, pin_memory=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(test_dataset, shuffle=True, batch_size=batch_size, pin_memory=True, num_workers=4)
 
     test_classes = Counter(label for _, label in test_dataset)
     test_size = test_classes.total()
 
     model = CNN(len(test_classes.keys())).to(device)
     print(model)
-    optimizer = optim.SGD(model.parameters(), lr=0.05)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
     correct_classes_history: list[list[int]] = []
-    for epoch in range(10):
+    for epoch in range(epochs):
         train(model, train_loader, optimizer, device)
         loss, correct = test(model, test_loader, len(test_classes.keys()), device)
         sc = sum(correct)
@@ -101,12 +119,33 @@ def run(train_dataset: torch.utils.data.Dataset, test_dataset: torch.utils.data.
     show_accuracy_glaph(test_classes, correct_classes_history, path=result_fig_path)
 
 
+def setup_params(not_number_train_size: int, not_number_test_size: int, batch_size: int, epochs: int, learning_rate: float) -> ExpParams:
+    return ExpParams(
+        not_number_train_size=not_number_train_size,
+        not_number_test_size=not_number_test_size,
+        train_size=60000 + not_number_train_size,
+        test_size=10000 + not_number_test_size,
+        batch_size=batch_size,
+        epochs=epochs,
+        learning_rate=learning_rate,
+    )
+
+
 if __name__ == "__main__":
     device = get_device()
-    train_dataset, test_dataset = generate_mnist_with_variousimg("../data", transform=transforms.Normalize((0.1307,), (0.3081,)))
-    run(train_dataset, test_dataset, result_fig_path="imgs/not-number.png")
 
+    print("mnist")
+    params = setup_params(0, 0, 100, 10, 0.05)
+    print_exp_param_mdtable(params._asdict())
     tf = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
     train_dataset = datasets.MNIST("../data", train=True, download=True, transform=tf)
     test_dataset = datasets.MNIST("../data", train=False, transform=tf)
-    run(train_dataset, test_dataset, result_fig_path="imgs/mnist.png")
+    run(train_dataset, test_dataset, params.batch_size, params.epochs, params.learning_rate, result_fig_path="imgs/mnist.png")
+
+    print("not-number")
+    params = setup_params(60000, 10000, 100, 10, 0.05)
+    print_exp_param_mdtable(params._asdict())
+    train_dataset, test_dataset = generate_mnist_with_variousimg(
+        "../data", transforms.Normalize((0.1307,), (0.3081,)), params.not_number_train_size, params.not_number_test_size
+    )
+    run(train_dataset, test_dataset, params.batch_size, params.epochs, params.learning_rate, result_fig_path="imgs/not-number.png")

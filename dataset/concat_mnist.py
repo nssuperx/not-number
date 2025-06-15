@@ -6,7 +6,7 @@ from dataset.dct_basis import DCTBasis
 
 
 def generate_mnist_with_dctbasis(
-    root: str, transform: Optional[Callable] = None
+    root: str, transform: Optional[Callable] = None, train_not_number_size: int = 6000, test_not_number_size: int = 1000
 ) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
     """MNIST + DCT基底画像の重みづけの和のような画像のデータセットを返す
 
@@ -18,8 +18,8 @@ def generate_mnist_with_dctbasis(
     :rtype: tuple[Dataset, Dataset]"""
     mnist_train = datasets.MNIST(root, train=True, download=True, transform=transforms.ToTensor())
     mnist_test = datasets.MNIST(root, train=False, transform=transforms.ToTensor())
-    dct_train = DCTBasis(len(mnist_train) // 10, transform=transform)
-    dct_test = DCTBasis(len(mnist_test) // 10, transform=transform)
+    dct_train = DCTBasis(train_not_number_size, transform=transform)
+    dct_test = DCTBasis(test_not_number_size, transform=transform)
     train = torch.utils.data.ConcatDataset([mnist_train, dct_train])
     test = torch.utils.data.ConcatDataset([mnist_test, dct_test])
 
@@ -56,7 +56,7 @@ class NotNumberLabelFMNIST(torch.utils.data.Dataset):
 
 
 def generate_mnist_with_fmnist(
-    root: str, transform: Optional[Callable] = None
+    root: str, transform: Optional[Callable] = None, train_not_number_size: int = 6000, test_not_number_size: int = 1000
 ) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
     """MNIST + FashionMNISTのデータセットを返す
 
@@ -71,8 +71,8 @@ def generate_mnist_with_fmnist(
         mnist_tf = transforms.Compose([mnist_tf, transform])
     mnist_train = datasets.MNIST(root, train=True, download=True, transform=mnist_tf)
     mnist_test = datasets.MNIST(root, train=False, transform=mnist_tf)
-    fmnist_train = NotNumberLabelFMNIST(root, data_size=len(mnist_train) // 10, train=True, transform=transform)
-    fmnist_test = NotNumberLabelFMNIST(root, data_size=len(mnist_test) // 10, train=False, transform=transform)
+    fmnist_train = NotNumberLabelFMNIST(root, data_size=train_not_number_size, train=True, transform=transform)
+    fmnist_test = NotNumberLabelFMNIST(root, data_size=test_not_number_size, train=False, transform=transform)
     train = torch.utils.data.ConcatDataset([mnist_train, fmnist_train])
     test = torch.utils.data.ConcatDataset([mnist_test, fmnist_test])
 
@@ -109,7 +109,7 @@ class NotNumberLabelKMNIST(torch.utils.data.Dataset):
 
 
 def generate_mnist_with_kmnist(
-    root: str, transform: Optional[Callable] = None
+    root: str, transform: Optional[Callable] = None, train_not_number_size: int = 6000, test_not_number_size: int = 1000
 ) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
     """MNIST + KMNISTのデータセットを返す
 
@@ -124,8 +124,8 @@ def generate_mnist_with_kmnist(
         mnist_tf = transforms.Compose([mnist_tf, transform])
     mnist_train = datasets.MNIST(root, train=True, download=True, transform=mnist_tf)
     mnist_test = datasets.MNIST(root, train=False, transform=mnist_tf)
-    kmnist_train = NotNumberLabelKMNIST(root, data_size=len(mnist_train) // 10, train=True, transform=transform)
-    kmnist_test = NotNumberLabelKMNIST(root, data_size=len(mnist_test) // 10, train=False, transform=transform)
+    kmnist_train = NotNumberLabelKMNIST(root, data_size=train_not_number_size, train=True, transform=transform)
+    kmnist_test = NotNumberLabelKMNIST(root, data_size=test_not_number_size, train=False, transform=transform)
     train = torch.utils.data.ConcatDataset([mnist_train, kmnist_train])
     test = torch.utils.data.ConcatDataset([mnist_test, kmnist_test])
 
@@ -133,7 +133,7 @@ def generate_mnist_with_kmnist(
 
 
 def generate_mnist_with_variousimg(
-    root: str, transform: Optional[Callable] = None
+    root: str, transform: Optional[Callable] = None, train_not_number_size: int = 6000, test_not_number_size: int = 1000
 ) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
     """MNIST + FashionMNIST + KMNISTのデータセットを返す
 
@@ -147,10 +147,10 @@ def generate_mnist_with_variousimg(
 
     mnist_train = datasets.MNIST(root, train=True, download=True, transform=mnist_tf)
     mnist_test = datasets.MNIST(root, train=False, transform=mnist_tf)
-    fmnist_train = NotNumberLabelFMNIST(root, data_size=len(mnist_train) // 20, train=True, transform=transform)
-    fmnist_test = NotNumberLabelFMNIST(root, data_size=len(mnist_test) // 20, train=False, transform=transform)
-    kmnist_train = NotNumberLabelKMNIST(root, data_size=len(mnist_train) // 20, train=True, transform=transform)
-    kmnist_test = NotNumberLabelKMNIST(root, data_size=len(mnist_test) // 20, train=False, transform=transform)
+    fmnist_train = NotNumberLabelFMNIST(root, data_size=train_not_number_size // 2, train=True, transform=transform)
+    fmnist_test = NotNumberLabelFMNIST(root, data_size=test_not_number_size // 2, train=False, transform=transform)
+    kmnist_train = NotNumberLabelKMNIST(root, data_size=train_not_number_size // 2, train=True, transform=transform)
+    kmnist_test = NotNumberLabelKMNIST(root, data_size=test_not_number_size // 2, train=False, transform=transform)
     train = torch.utils.data.ConcatDataset([mnist_train, fmnist_train, kmnist_train])
     test = torch.utils.data.ConcatDataset([mnist_test, fmnist_test, kmnist_test])
 
