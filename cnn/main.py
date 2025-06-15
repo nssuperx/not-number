@@ -10,7 +10,7 @@ from torchvision import datasets, transforms
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from dataset.concat_mnist import generate_mnist_with_variousimg
+from dataset.concat_mnist import generate_mnist_with_variousimg, generate_mnist_with_noise
 from util import get_device, show_accuracy_glaph, print_exp_param_mdtable
 
 # https://github.com/pytorch/examples/blob/main/mnist/main.py
@@ -149,3 +149,11 @@ if __name__ == "__main__":
         "../data", transforms.Normalize((0.1307,), (0.3081,)), params.not_number_train_size, params.not_number_test_size
     )
     run(train_dataset, test_dataset, params.batch_size, params.epochs, params.learning_rate, result_fig_path="imgs/not-number.png")
+
+    print("noise")
+    params = setup_params(60000, 10000, 100, 10, 0.05)
+    print_exp_param_mdtable(params._asdict())
+    train_dataset, test_dataset = generate_mnist_with_noise(
+        "../data", transforms.Normalize((0.1307,), (0.3081,)), params.not_number_train_size, params.not_number_test_size
+    )
+    run(train_dataset, test_dataset, params.batch_size, params.epochs, params.learning_rate, result_fig_path="imgs/noise.png")

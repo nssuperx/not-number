@@ -3,6 +3,7 @@ import torch
 from torchvision import datasets, transforms
 
 from dataset.dct_basis import DCTBasis
+from dataset.img_process import preprocess_imgs
 
 
 def generate_mnist_with_dctbasis(
@@ -108,6 +109,30 @@ class NotNumberLabelKMNIST(torch.utils.data.Dataset):
         return len(self.data)
 
 
+class NotNumberLabelNoise(torch.utils.data.Dataset):
+    def __init__(self, data_size: int = 6000, transform: Optional[Callable] = None) -> None:
+        """ノイズ画像を数字ではないとするデータセット
+        transformはデフォルトでtoTensor()的な動作が入る
+
+        :param data_size: 使う画像数
+        :type data_size: int
+        :param transform: datasets.FashionMNISTで設定するtransformのようなもの。デフォルトでtoTensor()的な動作が入る
+        :type transform: Optional[Callable]"""
+        super().__init__()
+        d = torch.rand((data_size, 1, 28, 28), dtype=torch.float32)  # [0,1)
+        self.data = preprocess_imgs(d)
+        self.transform = transform
+
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
+        d = self.data[index]
+        if self.transform is not None:
+            d = self.transform(d)
+        return d, 10  # ラベルは適当で良い。0-9以外ならなんでもいい。数字ではないを表せたらいい。
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+
 def generate_mnist_with_kmnist(
     root: str, transform: Optional[Callable] = None, train_not_number_size: int = 6000, test_not_number_size: int = 1000
 ) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
@@ -153,5 +178,29 @@ def generate_mnist_with_variousimg(
     kmnist_test = NotNumberLabelKMNIST(root, data_size=test_not_number_size // 2, train=False, transform=transform)
     train = torch.utils.data.ConcatDataset([mnist_train, fmnist_train, kmnist_train])
     test = torch.utils.data.ConcatDataset([mnist_test, fmnist_test, kmnist_test])
+
+    return train, test
+
+
+def generate_mnist_with_noise(
+    root: str, transform: Optional[Callable] = None, train_not_number_size: int = 6000, test_not_number_size: int = 1000
+) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
+    """MNIST + ノイズ画像のデータセットを返す
+
+    :param root: データセットの保存先
+    :type root: str
+    :param transform: datasets.MNISTで設定するtransformのようなもの。デフォルトでtoTensor()的な動作が入る
+    :type transform: Optional[Callable]
+    :return: MNIST + ノイズ画像のデータセット(train, test)
+    :rtype: tuple[Dataset, Dataset]"""
+    mnist_tf = transforms.ToTensor()
+    if transform is not None:
+        mnist_tf = transforms.Compose([mnist_tf, transform])
+    mnist_train = datasets.MNIST(root, train=True, download=True, transform=mnist_tf)
+    mnist_test = datasets.MNIST(root, train=False, transform=mnist_tf)
+    noise_train = NotNumberLabelNoise(data_size=train_not_number_size, transform=transform)
+    noise_test = NotNumberLabelNoise(data_size=test_not_number_size, transform=transform)
+    train = torch.utils.data.ConcatDataset([mnist_train, noise_train])
+    test = torch.utils.data.ConcatDataset([mnist_test, noise_test])
 
     return train, test
