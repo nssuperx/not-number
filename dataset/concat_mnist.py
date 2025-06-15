@@ -43,41 +43,17 @@ class NotNumberLabelFMNIST(torch.utils.data.Dataset):
         super().__init__()
         fmnist = datasets.FashionMNIST(root, train=train, download=True)
         indices = torch.randperm(len(fmnist.data))[:data_size]
-        self.data = fmnist.data[indices].unsqueeze(1)
+        self.data = fmnist.data[indices].unsqueeze(1).to(dtype=torch.float32) / 255.0  # toTensor的な動作
         self.transform = transform
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
-        d = self.data[index].to(dtype=torch.float32) / 255.0  # toTensor的な動作
+        d = self.data[index]
         if self.transform is not None:
             d = self.transform(d)
         return d, 10  # ラベルは適当で良い。0-9以外ならなんでもいい。数字ではないを表せたらいい。
 
     def __len__(self) -> int:
         return len(self.data)
-
-
-def generate_mnist_with_fmnist(
-    root: str, transform: Optional[Callable] = None, train_not_number_size: int = 6000, test_not_number_size: int = 1000
-) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
-    """MNIST + FashionMNISTのデータセットを返す
-
-    :param root: データセットの保存先
-    :type root: str
-    :param transform: datasets.MNISTで設定するtransformのようなもの。デフォルトでtoTensor()的な動作が入る
-    :type transform: Optional[Callable]
-    :return: MNIST + FashionMNISTのデータセット(train, test)
-    :rtype: tuple[Dataset, Dataset]"""
-    mnist_tf = transforms.ToTensor()
-    if transform is not None:
-        mnist_tf = transforms.Compose([mnist_tf, transform])
-    mnist_train = datasets.MNIST(root, train=True, download=True, transform=mnist_tf)
-    mnist_test = datasets.MNIST(root, train=False, transform=mnist_tf)
-    fmnist_train = NotNumberLabelFMNIST(root, data_size=train_not_number_size, train=True, transform=transform)
-    fmnist_test = NotNumberLabelFMNIST(root, data_size=test_not_number_size, train=False, transform=transform)
-    train = torch.utils.data.ConcatDataset([mnist_train, fmnist_train])
-    test = torch.utils.data.ConcatDataset([mnist_test, fmnist_test])
-
-    return train, test
 
 
 class NotNumberLabelKMNIST(torch.utils.data.Dataset):
@@ -96,11 +72,11 @@ class NotNumberLabelKMNIST(torch.utils.data.Dataset):
         super().__init__()
         kmnist = datasets.KMNIST(root, train=train, download=True)
         indices = torch.randperm(len(kmnist.data))[:data_size]
-        self.data = kmnist.data[indices].unsqueeze(1)
+        self.data = kmnist.data[indices].unsqueeze(1).to(dtype=torch.float32) / 255.0  # toTensor的な動作
         self.transform = transform
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
-        d = self.data[index].to(dtype=torch.float32) / 255.0  # toTensor的な動作
+        d = self.data[index]
         if self.transform is not None:
             d = self.transform(d)
         return d, 10  # ラベルは適当で良い。0-9以外ならなんでもいい。数字ではないを表せたらいい。
@@ -131,6 +107,30 @@ class NotNumberLabelNoise(torch.utils.data.Dataset):
 
     def __len__(self) -> int:
         return len(self.data)
+
+
+def generate_mnist_with_fmnist(
+    root: str, transform: Optional[Callable] = None, train_not_number_size: int = 6000, test_not_number_size: int = 1000
+) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
+    """MNIST + FashionMNISTのデータセットを返す
+
+    :param root: データセットの保存先
+    :type root: str
+    :param transform: datasets.MNISTで設定するtransformのようなもの。デフォルトでtoTensor()的な動作が入る
+    :type transform: Optional[Callable]
+    :return: MNIST + FashionMNISTのデータセット(train, test)
+    :rtype: tuple[Dataset, Dataset]"""
+    mnist_tf = transforms.ToTensor()
+    if transform is not None:
+        mnist_tf = transforms.Compose([mnist_tf, transform])
+    mnist_train = datasets.MNIST(root, train=True, download=True, transform=mnist_tf)
+    mnist_test = datasets.MNIST(root, train=False, transform=mnist_tf)
+    fmnist_train = NotNumberLabelFMNIST(root, data_size=train_not_number_size, train=True, transform=transform)
+    fmnist_test = NotNumberLabelFMNIST(root, data_size=test_not_number_size, train=False, transform=transform)
+    train = torch.utils.data.ConcatDataset([mnist_train, fmnist_train])
+    test = torch.utils.data.ConcatDataset([mnist_test, fmnist_test])
+
+    return train, test
 
 
 def generate_mnist_with_kmnist(

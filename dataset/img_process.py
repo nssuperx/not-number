@@ -32,7 +32,6 @@ def binarize_imgs(imgs: torch.Tensor, n: int) -> torch.Tensor:
 
 def preprocess_imgs(imgs: torch.Tensor) -> torch.Tensor:
     """前処理する。MNISTの画像に近づける
-    MNISTは背景が0.0で文字が1.0
     色の分布のさせ方をはっきりさせる
 
     :param imgs: Description
