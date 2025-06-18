@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "matplotlib",
-    "scipy",
+    "notnumberutil",
 ]
 
 [dependency-groups]
@@ -53,3 +53,4 @@ conflicts = [
 torch = { url = "https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torch-2.7.0a0+git3f903c3-cp312-cp312-win_amd64.whl", extra = "win-rocm" }
 torchaudio = { url = "https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torchaudio-2.6.0a0+1a8f621-cp312-cp312-win_amd64.whl", extra = "win-rocm" }
 torchvision = { url = "https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torchvision-0.22.0+9eb57cd-cp312-cp312-win_amd64.whl", extra = "win-rocm" }
+notnumberutil = { path = "notnumberutil", editable = true }

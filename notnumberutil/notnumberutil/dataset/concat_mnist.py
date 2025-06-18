@@ -2,8 +2,8 @@ from typing import Optional, Callable
 import torch
 from torchvision import datasets, transforms
 
-from dataset.dct_basis import DCTBasis
-from dataset.img_process import preprocess_imgs
+from .dct_basis import DCTBasis
+from .img_process import preprocess_imgs
 
 
 def generate_mnist_with_dctbasis(

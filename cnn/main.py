@@ -1,5 +1,3 @@
-import os
-import sys
 from collections import Counter
 from typing import NamedTuple
 import torch
@@ -8,10 +6,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
-from dataset.concat_mnist import generate_mnist_with_variousimg, generate_mnist_with_noise
-from util import get_device, show_accuracy_glaph, print_exp_param_mdtable
+from notnumberutil.dataset.concat_mnist import generate_mnist_with_variousimg, generate_mnist_with_noise
+from notnumberutil.util import get_device, show_accuracy_glaph, print_exp_param_mdtable
 
 # https://github.com/pytorch/examples/blob/main/mnist/main.py
 

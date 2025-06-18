@@ -1,15 +1,11 @@
-import os
-import sys
 from collections import Counter
 import torch
 import torch.optim as optim
 from torchvision import transforms
 
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
-from dataset.concat_mnist import generate_mnist_with_variousimg
-from simplefullconnectnet.simple_fullconnect_net import SimpleFullConnectNet, train, test
-from util import get_device, show_accuracy_glaph
+from notnumberutil.dataset.concat_mnist import generate_mnist_with_variousimg
+from notnumberutil.util import get_device, show_accuracy_glaph
+from simple_fullconnect_net import SimpleFullConnectNet, train, test
 
 if __name__ == "__main__":
     device = get_device()
